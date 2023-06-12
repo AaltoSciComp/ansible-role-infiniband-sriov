@@ -1,0 +1,13 @@
+[Unit]
+Description=Setup SR-IOV
+After=local-fs.target network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/set-sriov.sh
+TimeoutSec=120
+ExecStartPre=/bin/sleep 20
+
+[Install]
+WantedBy=multi-user.target

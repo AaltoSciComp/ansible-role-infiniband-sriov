@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# to be done once for the server
+# enable sr-iov from BIOS
+# lspci | grep -i mell
+# mstconfig -y -d $DEVID set SRIOV_EN=1 NUM_OF_VFS=8
+# Must be run manually, requires reboot upon activation
+
+
+# get pci-e devid for ib0
+NUM={{ sriov_port_node_guid | length }}
+
+# this needs to be done every boot
+# enable NUM of sriov VFs with the driver (the amount must be equal to NUM_OF_VFS=# for MLNX-card)
+echo $NUM > /sys/class/net/ib0/device/sriov_numvfs
+
+# see with ip link appeared VFs on
+
+# VF's on ib0: setting GUIDs + set to active mode
+{% for line in sriov_port_node_guid%}
+{% set item1, item2 = line.split(',') %}
+ip link set dev ib0 vf {{loop.index0}} node_guid {{ item1 }} port_guid {{ item2 }}
+ip link set dev ib0 vf {{loop.index0}} state enable
+{% endfor %}
+
+
+# Loop over all VF's and unbind/bind
+for dev in `lspci -D|grep Mellanox|grep "Virtual Function"|cut -d" " -f1`
+do
+  echo $dev > /sys/bus/pci/drivers/mlx5_core/unbind
+  echo $dev > /sys/bus/pci/drivers/mlx5_core/bind
+done

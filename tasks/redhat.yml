@@ -1,0 +1,21 @@
+---
+
+
+- name: Install systemd unit file for sr-iov script
+  copy:
+    src: set-sriov.service
+    dest: "/etc/systemd/system/set-sriov.service"
+    mode: 0664
+    owner: root
+    group: root
+  when: setup_sriov and sriov_port_node_guid is defined
+
+- name: Install sriov script
+  template: 
+    src: set-sriov.sh.j2
+    dest: /usr/local/bin/set-sriov.sh
+    owner: root
+    group: root
+    mode: 0744
+  when: setup_sriov and sriov_port_node_guid is defined
+
