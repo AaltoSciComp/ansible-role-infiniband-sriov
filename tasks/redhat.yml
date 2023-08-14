@@ -1,6 +1,7 @@
 ---
 
 
+# Setup kvm host sriov when defined
 - name: Install systemd unit file for sr-iov script
   copy:
     src: set-sriov.service
@@ -19,3 +20,24 @@
     mode: 0744
   when: setup_sriov and sriov_port_node_guid is defined
 
+
+# setup libvirt vm ib-pcie devices when fefined
+- name: Install kvm-ib scripts
+  copy:
+    src: kvm-ib-attach.sh
+    dest: '/usr/local/bin'
+    mode: 0550
+    owner: root
+    group: root
+  when: setup_libvirt_pcie
+
+- name: Setup kmv-ib pcie devices for libvirt vms
+  ansible.builtin.command:
+    argv:
+      - /usr/local/bin/kvm-ib-attach.sh
+      - "{{ item.key }}"
+      - "{{ item['value']['ib_bus'] }}"
+      - "{{ item['value']['ib_slot'] }}"
+      - "{{ item['value']['ib_function'] }}"
+  loop: "{{ kvm_ib_dev | dict2items }}"
+  when: setup_libvirt_pcie
