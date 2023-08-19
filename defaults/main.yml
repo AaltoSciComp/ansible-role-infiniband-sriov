@@ -3,3 +3,5 @@
 
 # wether to setup sriov. If true, then one must setup list containing node/port guids
 setup_sriov: false
+
+setup_libvirt_pcie: false

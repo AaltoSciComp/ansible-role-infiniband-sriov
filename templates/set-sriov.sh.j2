@@ -1,32 +1,47 @@
 #!/bin/bash
 
-# to be done once for the server
-# enable sr-iov from BIOS
-# lspci | grep -i mell
-# mstconfig -y -d $DEVID set SRIOV_EN=1 NUM_OF_VFS=8
-# Must be run manually, requires reboot upon activation
+# setting up SR-IOV on the Mellanox cards
+# to be done once for the server: enable sr-iov from BIOS
+
+# number of VFs per Mellanox card
+VFNUM={{ sriov_num_vf }}
+
+# card's firmware config must be done only once per card
+# to find out DEVID: lspci | grep -i mell
+# mstconfig -y -d $DEVID set SRIOV_EN=1 NUM_OF_VFS=$VFNUM
+# mstconfig -y -d 63:00.0 set SRIOV_EN=1 NUM_OF_VFS=4
+# mstconfig -y -d a1:00.0 set SRIOV_EN=1 NUM_OF_VFS=4
 
 
-# get pci-e devid for ib0
-NUM={{ sriov_port_node_guid | length }}
+# the rest must be done every boot
+# VFs number must be equal to NUM_OF_VFS= (!)
 
-# this needs to be done every boot
-# enable NUM of sriov VFs with the driver (the amount must be equal to NUM_OF_VFS=# for MLNX-card)
-echo $NUM > /sys/class/net/ib0/device/sriov_numvfs
 
-# see with ip link appeared VFs on
-
-# VF's on ib0: setting GUIDs + set to active mode
-{% for line in sriov_port_node_guid%}
-{% set item1, item2 = line.split(',') %}
-ip link set dev ib0 vf {{loop.index0}} node_guid {{ item1 }} port_guid {{ item2 }}
-ip link set dev ib0 vf {{loop.index0}} state enable
+# letting mellanox driver know how many VFs we want to initiate
+{% for line in sriov_ib_pci_bus %}
+echo "$VFNUM" > /sys/class/infiniband/mlx5_{{loop.index0}}/device/sriov_numvfs
 {% endfor %}
 
+# setting up GUIDs and activatings VF interfaces
+# ftr: ib2, ib0 vf 0, mlx5_2, 63:00.1 are all about the same VF
+declare -A mlx
+{% for item in sriov_ib_pci_bus %}
+mlx +=([ib{{loop.index0}}]='{{item}}')
+{% endfor %}
+#mlx=([ib0]='63:00' [ib1]='a1:00')  # ib interface as an index and PCI ID part as a value
 
-# Loop over all VF's and unbind/bind
-for dev in `lspci -D|grep Mellanox|grep "Virtual Function"|cut -d" " -f1`
-do
-  echo $dev > /sys/bus/pci/drivers/mlx5_core/unbind
-  echo $dev > /sys/bus/pci/drivers/mlx5_core/bind
+for ibif in "${!mlx[@]}"; do
+  if ip link show $ibif &> /dev/null ; then
+    for vf in $(seq 0 $((VFNUM-1))); do
+      # setting GUIDs, generic but unique enough (using DEVID and VF as an association)
+      ip link set dev $ibif vf $vf node_guid "{{sriov_guid_prefix}}:${mlx[$ibif]}:${vf}1"
+      ip link set dev $ibif vf $vf port_guid "{{sriov_guid_prefix}}:${mlx[$ibif]}:${vf}2"
+      echo 0000:${mlx[$ibif]}.$((vf+1)) > /sys/bus/pci/drivers/mlx5_core/unbind
+      echo 0000:${mlx[$ibif]}.$((vf+1)) > /sys/bus/pci/drivers/mlx5_core/bind
+      # activating VF port
+      ip link set dev $ibif vf $vf state auto
+    done
+  fi
 done
+
+# when done, check with ibstat that port/node GUIDs are non-zero and Status is Active

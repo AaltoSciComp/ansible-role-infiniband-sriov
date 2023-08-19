@@ -9,7 +9,7 @@
     mode: 0664
     owner: root
     group: root
-  when: setup_sriov and sriov_port_node_guid is defined
+  when: setup_sriov and sriov_ib_pci_bus is defined
 
 - name: Install sriov script
   template: 
@@ -18,7 +18,7 @@
     owner: root
     group: root
     mode: 0744
-  when: setup_sriov and sriov_port_node_guid is defined
+  when: setup_sriov and sriov_ib_pci_bus is defined
 
 
 # setup libvirt vm ib-pcie devices when fefined
