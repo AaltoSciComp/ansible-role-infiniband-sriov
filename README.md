@@ -19,11 +19,11 @@ giving these virtual devises (node and port) predefined GUIDs.
 (usually above virtual functions) to existing libvirt machines. This brings Infiniband capability 
 directly to libvirt virtual machines. Assumes "community.libvirt" is available for Ansible.
 
-kvm_ib_dev:
-  vm1:
-    ib_bus: 0x01
-    ib_slot: 0x00
-    ib_function: 0x1
+    kvm_ib_dev:
+      vm1:
+        ib_bus: 0x01
+        ib_slot: 0x00
+        ib_function: 0x1
 
 
 Example Playbook
