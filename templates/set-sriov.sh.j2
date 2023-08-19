@@ -3,9 +3,6 @@
 # setting up SR-IOV on the Mellanox cards
 # to be done once for the server: enable sr-iov from BIOS
 
-# number of VFs per Mellanox card
-VFNUM={{ sriov_num_vf }}
-
 # card's firmware config must be done only once per card
 # to find out DEVID: lspci | grep -i mell
 # mstconfig -y -d $DEVID set SRIOV_EN=1 NUM_OF_VFS=$VFNUM
@@ -15,6 +12,7 @@ VFNUM={{ sriov_num_vf }}
 
 # the rest must be done every boot
 # VFs number must be equal to NUM_OF_VFS= (!)
+VFNUM={{ sriov_num_vf }}
 
 
 # letting mellanox driver know how many VFs we want to initiate
@@ -26,7 +24,7 @@ echo "$VFNUM" > /sys/class/infiniband/mlx5_{{loop.index0}}/device/sriov_numvfs
 # ftr: ib2, ib0 vf 0, mlx5_2, 63:00.1 are all about the same VF
 declare -A mlx
 {% for item in sriov_ib_pci_bus %}
-mlx +=([ib{{loop.index0}}]='{{item}}')
+mlx+=([ib{{loop.index0}}]='{{item}}')
 {% endfor %}
 #mlx=([ib0]='63:00' [ib1]='a1:00')  # ib interface as an index and PCI ID part as a value
 
