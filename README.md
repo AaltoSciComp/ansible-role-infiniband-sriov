@@ -1,5 +1,5 @@
-Ansible-role-infiniband
-=======================
+Ansible-role-infiniband-sriov
+=============================
 
 A role to manage infiniband setup and configs including sr-iov. Tested on RHEL 9.x variant systems. 
 
@@ -8,12 +8,15 @@ Role Variables
 
 **setup_sriov: "true/false"**. If defined, sets up a systemd service on a boot time to bring up 
 Infiniband Virtual Functions if those are enabled in Bios/Infiniband card firmware level. Allows 
-giving these virtual devises (node and port) predefined GUIDs.
+giving these virtual devises predefined GUIDs. Number of virtual functions must correspond to what
+is set for firmware level of the card.
 
-    sriov_port_node_guid:
-    - 11:22:33:44:55:66:77:01,11:22:33:44:55:66:77:11
-    - 11:22:33:44:55:66:77:02,11:22:33:44:55:66:77:12
+    sriov_num_vf: 4
+    sriov_ib_pci_bus:
+    - '10:00'
+    - 'a1:00'
 
+    sriov_guid_prefix: '11:22:33:44:55'
 
 **setup_libvirt_pcie**: "true/false"**. If defined allows host server to attach devices 
 (usually above virtual functions) to existing libvirt machines. This brings Infiniband capability 
@@ -33,7 +36,7 @@ Setup above variables and simply include the role.
 
     - hosts: servers
       roles:
-         - { role: ansible-role-infiniband, tags: ['infiniband'] }
+         - { role: ansible-role-infiniband-sriov, tags: ['sriov'] }
 
 License
 -------
