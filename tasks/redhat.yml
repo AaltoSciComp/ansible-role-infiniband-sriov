@@ -12,7 +12,7 @@
   when: setup_sriov and sriov_ib_pci_bus is defined
 
 - name: Install sriov script
-  template: 
+  template:
     src: set-sriov.sh.j2
     dest: /usr/local/bin/set-sriov.sh
     owner: root
